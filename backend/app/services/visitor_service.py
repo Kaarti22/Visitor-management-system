@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.repos.visitor_repo import VisitorRepository
+from app.repos.employee_repo import EmployeeRespository
 from typing import Optional
 from app.utils.image_uploader import upload_image_base64
 from app.services.approval_service import ApprovalService
@@ -26,8 +27,14 @@ class VisitorService:
 
         visitor = self.repo.create_visitor(visitor_data)
 
+        employee_repo = EmployeeRespository(self.db)
+        host = employee_repo.get_employee_by_name(data["host_employee_name"])
+
+        if not host:
+            raise Exception("Host employee not found")
+
         approval_service = ApprovalService(self.db)
-        approval_service.create_approval_request(visitor.id, employee_id=1)
+        approval_service.create_approval_request(visitor.id, employee_id=host.id)
         
         return visitor
     
