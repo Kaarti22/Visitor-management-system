@@ -4,6 +4,7 @@ from app.core.config import Base, engine
 import app.models
 from app.api.routes_visitor import router as visitor_router
 from app.api.routes_approval import router as approval_router
+from app.api.routes_preapproval import router as preapproval_router
 app = FastAPI()
 
 app.add_middleware(
@@ -18,6 +19,7 @@ Base.metadata.create_all(bind=engine)
 
 app.include_router(visitor_router)
 app.include_router(approval_router)
+app.include_router(preapproval_router)
 
 @app.get("/")
 def root():
