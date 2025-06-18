@@ -1,14 +1,28 @@
 from sqlalchemy.orm import Session
 from app.repos.visitor_repo import VisitorRepository
 from typing import Optional
+from app.utils.image_uploader import upload_image_base64
 
 class VisitorService:
     def __init__(self, db: Session):
         self.repo = VisitorRepository(db)
     
     def register_visitor(self, data: dict):
-        # TODO: Add Cloudinary photo upload and validations
-        visitor = self.repo.create_visitor(data)
+        photo_url = None
+        if data.get("photo_base64"):
+            photo_url = upload_image_base64(data["photo_base64"])
+
+        visitor_data = {
+            "full_name": data["full_name"],
+            "contact": data["contact"],
+            "company": data.get("company"),
+            "purpose": data["purpose"],
+            "host_employee_name": data["host_employee_name"],
+            "host_department": data["host_department"],
+            "photo_url": photo_url,
+        }
+
+        visitor = self.repo.create_visitor(visitor_data)
         return visitor
     
     def fetch_visitor(self, visitor_id: int):

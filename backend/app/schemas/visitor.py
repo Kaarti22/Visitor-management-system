@@ -9,8 +9,7 @@ class VisitorCreate(BaseModel):
     purpose: str
     host_employee_name: str
     host_department: str
-    photo_url: Optional[HttpUrl] = None
-    badge_url: Optional[HttpUrl] = None
+    photo_base64: Optional[str] = None
 
 class VisitorOut(BaseModel):
     id: int
