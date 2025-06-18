@@ -2,9 +2,11 @@ from sqlalchemy.orm import Session
 from app.repos.visitor_repo import VisitorRepository
 from typing import Optional
 from app.utils.image_uploader import upload_image_base64
+from app.services.approval_service import ApprovalService
 
 class VisitorService:
     def __init__(self, db: Session):
+        self.db = db
         self.repo = VisitorRepository(db)
     
     def register_visitor(self, data: dict):
@@ -23,6 +25,10 @@ class VisitorService:
         }
 
         visitor = self.repo.create_visitor(visitor_data)
+
+        approval_service = ApprovalService(self.db)
+        approval_service.create_approval_request(visitor.id, employee_id=1)
+        
         return visitor
     
     def fetch_visitor(self, visitor_id: int):
