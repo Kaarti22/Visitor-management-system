@@ -34,6 +34,21 @@ class ApprovalStatus(str, enum.Enum):
     APPROVED = "APPROVED"
     REJECTED = "REJECTED"
 
+class PreApproval(Base):
+    __tablename__ = "preapprovals"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    visitor_id = Column(Integer, ForeignKey("visitors.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+
+    valid_from = Column(DateTime(timezone=True), nullable=False)
+    valid_to = Column(DateTime(timezone=True), nullable=False)
+
+    max_visits_per_day = Column(Integer, default=5)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 class Approval(Base):
     __tablename__ = "approvals"
 
