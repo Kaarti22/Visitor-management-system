@@ -17,3 +17,13 @@ class Visitor(Base):
     check_in = Column(DateTime(timezone=True), server_default=func.now())
     check_out = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class Employee(Base):
+    __tablename__ = "employees"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, nullable=False)
+    department = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
+    password = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
