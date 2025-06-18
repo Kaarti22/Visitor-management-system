@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+import enum
 from sqlalchemy.sql import func
 from .core.config import Base
 
@@ -27,3 +28,21 @@ class Employee(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class ApprovalStatus(str, enum.Enum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+
+class Approval(Base):
+    __tablename__ = "approvals"
+
+    id = Column(Integer, primary_key=True, index=False)
+
+    visitor_id = Column(Integer, ForeignKey("visitors.id"), nullable=False)
+    employee_id = Column(Integer, ForeignKey("employees.id"), nullable=False)
+
+    status = Column(Enum(ApprovalStatus), default=ApprovalStatus.PENDING, nullable=False)
+
+    requested_at = Column(DateTime(timezone=True), server_default=func.now())
+    decision_at = Column(DateTime(timezone=True), nullable=True)
