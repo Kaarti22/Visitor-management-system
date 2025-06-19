@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import api from "@/lib/axios";
 import { useState } from "react";
 import { getEmployeeFromToken } from "@/lib/token";
+import { toast } from "sonner";
 
 const employee = getEmployeeFromToken();
 const employeeId = employee?.id;
@@ -18,24 +19,20 @@ const PreApprovePage = () => {
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");
   const [maxPerDay, setMaxPerDay] = useState(5);
-  const [message, setMessage] = useState("");
 
   const handleSubmit = async (ev: any) => {
     ev.preventDefault();
     try {
-      await api.post(
-        `/preapprovals/`,
-        {
-          visitor_id: Number(visitorId),
-          employee_id: employeeId,
-          valid_from: validFrom,
-          valid_to: validTo,
-          max_visits_per_day: maxPerDay,
-        }
-      );
-      setMessage("Pre-approval scheduled successfully");
+      await api.post(`/preapprovals/`, {
+        visitor_id: Number(visitorId),
+        employee_id: employeeId,
+        valid_from: validFrom,
+        valid_to: validTo,
+        max_visits_per_day: maxPerDay,
+      });
+      toast.success("Pre-approval scheduled successfully");
     } catch (err: any) {
-      setMessage(
+      toast.error(
         err.response?.data?.detail || "Failed to schedule pre-approval"
       );
     }
@@ -87,8 +84,6 @@ const PreApprovePage = () => {
           Schedule Pre-Approval
         </Button>
       </form>
-
-      {message && <p className="mt-4 text-green-600 font-medium">{message}</p>}
     </div>
   );
 };

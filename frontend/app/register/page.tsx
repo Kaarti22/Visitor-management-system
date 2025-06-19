@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
+import { toast } from "sonner";
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -19,7 +20,6 @@ const RegisterPage = () => {
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [response, setResponse] = useState<any>(null);
 
   const handleChange = (ev: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [ev.target.name]: ev.target.value });
@@ -46,9 +46,9 @@ const RegisterPage = () => {
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/visitors/register`,
         formData
       );
-      setResponse(res.data);
+      toast.success("Visitor registered successfully.");
     } catch (err: any) {
-      alert(err.response?.data?.detail || "Something went wrong");
+      toast.error(err.response?.data?.detail || "Something went wrong");
     } finally {
       setLoading(false);
     }
@@ -92,19 +92,6 @@ const RegisterPage = () => {
           {loading ? "Registering..." : "Submit"}
         </Button>
       </form>
-      {response && (
-        <div className="mt-6 border rounded p-4 bg-green-50">
-          <h2 className="font-semibold">Visitor Registered</h2>
-          <p>ID: {response.id}</p>
-          {response.photo_url && (
-            <img
-              src={response.photo_url}
-              alt="Uploaded"
-              className="w-32 mt-2"
-            />
-          )}
-        </div>
-      )}
     </div>
   );
 };

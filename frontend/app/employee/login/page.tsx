@@ -6,16 +6,15 @@ import { Label } from "@/components/ui/label";
 import api from "@/lib/axios";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const EmployeeLogin = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const router = useRouter();
 
   const handleLogin = async (ev: React.FormEvent) => {
     ev.preventDefault();
-    setError("");
     try {
       const res = await api.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/auth/login`,
@@ -30,8 +29,9 @@ const EmployeeLogin = () => {
 
       localStorage.setItem("token", res.data.access_token);
       router.push("/employee/dashboard");
+      toast.success("Login successful");
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Login failed");
+      toast.error(err.response?.data?.detail || "Login failed");
     }
   };
 
@@ -63,7 +63,6 @@ const EmployeeLogin = () => {
           Login
         </Button>
       </form>
-      {error && <p className="text-red-500">{error}</p>}
     </div>
   );
 };

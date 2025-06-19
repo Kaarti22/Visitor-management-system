@@ -3,6 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { toast } from "sonner";
 
 const BadgePage = () => {
   const searchParams = useSearchParams();
@@ -18,7 +19,7 @@ const BadgePage = () => {
         );
         setVisitor(res.data);
       } catch (err) {
-        console.error("Visitor not found");
+        toast.error("Visitor not found");
       }
     };
     fetchVisitor();

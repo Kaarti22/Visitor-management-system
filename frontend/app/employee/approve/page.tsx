@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/useAuth";
 import { getEmployeeFromToken } from "@/lib/token";
 import api from "@/lib/axios";
+import { toast } from "sonner";
 
 interface Approval {
   id: number;
@@ -37,9 +38,10 @@ export default function ApprovePage() {
     setLoading(true);
     try {
       await api.post(`/approvals/${id}/action`, { status });
+      toast.success(`Approval ID ${id} approved`);
       await fetchApprovals();
     } catch {
-      alert("Failed to update approval");
+      toast.error("Failed to update approval");
     } finally {
       setLoading(false);
     }
