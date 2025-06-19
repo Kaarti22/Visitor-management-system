@@ -4,10 +4,12 @@ import { useAuth } from "@/lib/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import axios from "axios";
+import api from "@/lib/axios";
 import { useState } from "react";
+import { getEmployeeFromToken } from "@/lib/token";
 
-const EMPLOYEE_ID = 1;
+const employee = getEmployeeFromToken();
+const employeeId = employee?.id;
 
 const PreApprovePage = () => {
   useAuth();
@@ -21,11 +23,11 @@ const PreApprovePage = () => {
   const handleSubmit = async (ev: any) => {
     ev.preventDefault();
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/preapprovals/`,
+      await api.post(
+        `/preapprovals/`,
         {
           visitor_id: Number(visitorId),
-          employee_id: EMPLOYEE_ID,
+          employee_id: employeeId,
           valid_from: validFrom,
           valid_to: validTo,
           max_visits_per_day: maxPerDay,

@@ -2,9 +2,10 @@
 
 import { useAuth } from "@/lib/useAuth";
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/lib/axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getEmployeeFromToken } from "@/lib/token";
 
 interface Approval {
   id: number;
@@ -16,19 +17,20 @@ interface Approval {
   visitor?: any;
 }
 
-const EMPLOYEE_ID = 1;
+const employee = getEmployeeFromToken();
+const employeeId = employee?.id;
+
+console.log(employee);
 
 const ApprovalDashboard = () => {
   useAuth();
-  
+
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(false);
 
   const fetchApprovals = async () => {
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/approvals/${EMPLOYEE_ID}`
-      );
+      const res = await api.get(`/approvals/${employeeId}`);
       setApprovals(res.data);
     } catch (err) {
       console.error("Error fetching approvals");
@@ -37,10 +39,7 @@ const ApprovalDashboard = () => {
 
   const handleAction = async (id: number, status: "APPROVED" | "REJECTED") => {
     try {
-      await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/approvals/${id}/action`,
-        { status }
-      );
+      await api.post(`/approvals/${id}/action`, { status });
       await fetchApprovals();
     } catch (err) {
       alert("Failed to update approval status");
