@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/lib/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +10,8 @@ import { useState } from "react";
 const EMPLOYEE_ID = 1;
 
 const PreApprovePage = () => {
+  useAuth();
+
   const [visitorId, setVisitorId] = useState("");
   const [validFrom, setValidFrom] = useState("");
   const [validTo, setValidTo] = useState("");

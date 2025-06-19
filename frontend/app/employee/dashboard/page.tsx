@@ -1,5 +1,6 @@
 "use client";
 
+import { useAuth } from "@/lib/useAuth";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,8 @@ interface Approval {
 const EMPLOYEE_ID = 1;
 
 const ApprovalDashboard = () => {
+  useAuth();
+  
   const [approvals, setApprovals] = useState<Approval[]>([]);
   const [loading, setLoading] = useState(false);
 
