@@ -1,99 +1,25 @@
 "use client";
 
 import { useAuth } from "@/lib/useAuth";
-import { useEffect, useState } from "react";
-import api from "@/lib/axios";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { getEmployeeFromToken } from "@/lib/token";
 
-interface Approval {
-  id: number;
-  visitor_id: number;
-  employee_id: number;
-  status: string;
-  requested_at: string;
-  decision_at: string | null;
-  visitor?: any;
-}
-
-const employee = getEmployeeFromToken();
-const employeeId = employee?.id;
-
-console.log(employee);
-
-const ApprovalDashboard = () => {
+export default function EmployeeDashboard() {
   useAuth();
 
-  const [approvals, setApprovals] = useState<Approval[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchApprovals = async () => {
-    try {
-      const res = await api.get(`/approvals/${employeeId}`);
-      setApprovals(res.data);
-    } catch (err) {
-      console.error("Error fetching approvals");
-    }
-  };
-
-  const handleAction = async (id: number, status: "APPROVED" | "REJECTED") => {
-    try {
-      await api.post(`/approvals/${id}/action`, { status });
-      await fetchApprovals();
-    } catch (err) {
-      alert("Failed to update approval status");
-    }
-  };
-
-  useEffect(() => {
-    fetchApprovals();
-  }, []);
-
   return (
-    <div className="max-w-4xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Pending Visitor Approvals</h1>
-      {approvals.length === 0 && (
-        <p className="text-muted">No pending approvals</p>
-      )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {approvals.map((appr) => (
-          <Card key={appr.id} className="p-4">
-            <CardContent className="space-y-2">
-              <p>
-                <strong>Visitor ID: </strong>
-                {appr.visitor_id}
-              </p>
-              <p>
-                <strong>Approval ID: </strong>
-                {appr.id}
-              </p>
-              <p>
-                <strong>Requested at: </strong>
-                {new Date(appr.requested_at).toLocaleString()}
-              </p>
-              <div className="flex gap-2">
-                <Button
-                  variant={"outline"}
-                  onClick={() => handleAction(appr.id, "APPROVED")}
-                  className="cursor-pointer"
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant={"destructive"}
-                  onClick={() => handleAction(appr.id, "REJECTED")}
-                  className="cursor-pointer"
-                >
-                  Reject
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+    <div className="max-w-xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4">Welcome to your Dashboard</h1>
+      <ul className="list-disc pl-4 space-y-2">
+        <li>
+          <a href="/employee/approve" className="text-blue-600 underline">
+            View & Approve Visitors
+          </a>
+        </li>
+        <li>
+          <a href="/employee/preapprove" className="text-blue-600 underline">
+            Schedule a Pre-Approval
+          </a>
+        </li>
+      </ul>
     </div>
   );
-};
-
-export default ApprovalDashboard;
+}
