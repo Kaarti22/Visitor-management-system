@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas.visitor import VisitorCreate, VisitorOut
 from app.services.visitor_service import VisitorService
 from app.core.config import SessionLocal
+from app.models import Employee
 
 router = APIRouter(prefix="/visitors", tags=["Visitors"])
 
@@ -23,6 +24,20 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
 
 @router.post("/register", response_model=VisitorOut, status_code=status.HTTP_201_CREATED)
 def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
+    host = (
+        db.query(Employee)
+        .filter(
+            Employee.name.ilike(data.host_employee_name.strip()),
+            Employee.department.ilike(data.host_department.strip())
+        )
+        .first()
+    )
+    if not host:
+        raise HTTPException(
+            status_code=400,
+            detail="Host employee not found in the specified department"
+        )
+
     service = VisitorService(db)
     visitor = service.register_visitor(data.dict())
     return visitor

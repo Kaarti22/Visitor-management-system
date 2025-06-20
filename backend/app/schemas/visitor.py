@@ -9,7 +9,7 @@ class VisitorCreate(BaseModel):
     purpose: str
     host_employee_name: str
     host_department: str
-    photo_base64: Optional[str] = None
+    photo_base64: str
 
 class VisitorOut(BaseModel):
     id: int
