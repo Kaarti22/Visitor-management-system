@@ -4,6 +4,7 @@ from app.schemas.visitor import VisitorCreate, VisitorOut
 from app.services.visitor_service import VisitorService
 from app.core.config import SessionLocal
 from app.models import Employee
+from datetime import datetime
 
 router = APIRouter(prefix="/visitors", tags=["Visitors"])
 
@@ -40,4 +41,21 @@ def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
 
     service = VisitorService(db)
     visitor = service.register_visitor(data.dict())
+    return visitor
+
+@router.patch("/{visitor_id}/checkout", response_model=VisitorOut)
+def checkout_visitor(visitor_id: int, db: Session = Depends(get_db)):
+    service = VisitorService(db)
+    visitor = service.fetch_visitor(visitor_id)
+
+    if not visitor:
+        raise HTTPException(status_code=404, detail="Visitor not found")
+    
+    if visitor.check_out:
+        raise HTTPException(status_code=400, detail="Visitor already checkout out")
+    
+    visitor.check_out = datetime.utcnow()
+    db.commit()
+    db.refresh(visitor)
+
     return visitor
