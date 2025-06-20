@@ -27,7 +27,7 @@ export default function ApprovePage() {
   const fetchApprovals = async () => {
     if (!employee?.id) return;
     try {
-      const res = await api.get(`/approvals/${employee.id}`);
+      const res = await api.get(`/approvals/${employee.id}?status=PENDING`);
       setApprovals(res.data);
     } catch {
       console.error("Error fetching approvals");

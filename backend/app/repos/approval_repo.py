@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 from app.models import Approval, ApprovalStatus
+from datetime import datetime
 
 class ApprovalRepository:
     def __init__(self, db: Session):
@@ -22,6 +23,8 @@ class ApprovalRepository:
         approval = self.db.query(Approval).filter(Approval.id == approval_id).first()
         if approval:
             approval.status = status
+            if status.upper() in ['APPROVED', 'REJECTED']:
+                approval.decision_at = datetime.utcnow()
             self.db.commit()
             self.db.refresh(approval)
         return approval
