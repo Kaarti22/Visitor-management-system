@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Enum
+from sqlalchemy.orm import relationship
 import enum
 from sqlalchemy.sql import func
 from .core.config import Base
@@ -18,6 +19,8 @@ class Visitor(Base):
     check_in = Column(DateTime(timezone=True), server_default=func.now())
     check_out = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    approvals = relationship("Approval", back_populates="visitor")
 
 class Employee(Base):
     __tablename__ = "employees"
@@ -61,3 +64,5 @@ class Approval(Base):
 
     requested_at = Column(DateTime(timezone=True), server_default=func.now())
     decision_at = Column(DateTime(timezone=True), nullable=True)
+
+    visitor = relationship("Visitor", back_populates="approvals")

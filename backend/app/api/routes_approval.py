@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from app.core.config import SessionLocal
 from app.services.approval_service import ApprovalService
 from app.schemas.approval import ApprovalOut, ApprovalAction
 from app.models import Approval
-from typing import Optional, List
+from typing import Optional
 
 router = APIRouter(prefix="/approvals", tags=["Approvals"])
 
@@ -21,7 +21,7 @@ def get_approvals(
     status: Optional[str] = Query(None),
     db: Session = Depends(get_db)
 ):
-    query = db.query(Approval).filter(Approval.employee_id == employee_id)
+    query = db.query(Approval).options(joinedload(Approval.visitor)).filter(Approval.employee_id == employee_id)
     if status:
         query = query.filter(Approval.status == status.upper())
     return query.all()

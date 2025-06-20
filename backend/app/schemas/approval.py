@@ -2,6 +2,7 @@ from pydantic import BaseModel
 from enum import Enum
 from typing import Optional
 from datetime import datetime
+from app.schemas.visitor import VisitorOut
 
 class ApprovalStatus(str, Enum):
     PENDING = "PENDING"
@@ -15,6 +16,7 @@ class ApprovalOut(BaseModel):
     status: ApprovalStatus
     requested_at: datetime
     decision_at: Optional[datetime]
+    visitor: Optional[VisitorOut]
 
     class Config:
         orm_mode = True
