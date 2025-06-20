@@ -46,7 +46,7 @@ export default function HomePage() {
           <Button
             size="lg"
             className="cursor-pointer"
-            onClick={() => router.push("/employee/login")}
+            onClick={() => router.push("/login")}
           >
             Employee Login
           </Button>

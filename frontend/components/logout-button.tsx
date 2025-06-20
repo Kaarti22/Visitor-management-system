@@ -9,7 +9,7 @@ const LogoutButton = () => {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
-    router.replace("/employee/login");
+    router.replace("/login");
     toast.success("Logged out", {
       description: "You've been safely logged out.",
     });
