@@ -5,26 +5,47 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 const BadgePage = () => {
   const searchParams = useSearchParams();
   const visitorId = searchParams.get("id");
   const [visitor, setVisitor] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const fetchVisitor = async () => {
+    if (!visitorId) return;
+    try {
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/visitors/${visitorId}`
+      );
+      setVisitor(res.data);
+    } catch {
+      toast.error("Visitor not found");
+    }
+  };
+
+  const handleCheckout = async () => {
+    if (!visitorId) return;
+    setLoading(true);
+    try {
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/visitors/${visitorId}/checkout`
+      );
+      toast.success("Visitor checked out successfully");
+      await fetchVisitor();
+    } catch (err: any) {
+      toast.error(err.response?.data?.detail || "Checkout failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchVisitor = async () => {
-      if (!visitorId) return;
-      try {
-        const res = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}/visitors/${visitorId}`
-        );
-        setVisitor(res.data);
-      } catch {
-        toast.error("Visitor not found");
-      }
-    };
     fetchVisitor();
   }, [visitorId]);
+
+  console.log(visitor);
 
   if (!visitorId)
     return <p className="p-4">Visitor ID is missing in the URL.</p>;
@@ -67,6 +88,28 @@ const BadgePage = () => {
           <p>
             <strong>Department:</strong> {visitor.host_department}
           </p>
+          {visitor.check_out ? (
+            <p className="text-green-600 font-semibold pt-2">
+              Checked out at: {new Date(visitor.check_out).toLocaleString()}
+            </p>
+          ) : (
+            visitor.badge_url && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Button
+                  onClick={handleCheckout}
+                  disabled={loading}
+                  className="mt-4 w-full cursor-pointer"
+                  variant="outline"
+                >
+                  {loading ? "Checking out..." : "Check Out"}
+                </Button>
+              </motion.div>
+            )
+          )}
         </div>
 
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
