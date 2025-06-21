@@ -38,3 +38,30 @@ def send_visitor_notification(to_email: str, visitor_name: str, purpose: str) ->
     except Exception as e:
         logger.error(f"Error sending email to {to_email}: {e}")
         return None
+    
+def send_badge_email(to_email: str, visitor_name: str, badge_url: str):
+    if not SENDGRID_API_KEY or not FROM_EMAIL:
+        logger.error("SendGrid API key or FROM_EMAIL is not configured.")
+        return None
+    
+    message = Mail(
+        from_email=FROM_EMAIL,
+        to_emails=to_email,
+        subject="Your Visitor QR badge",
+        html_content=f"""
+            <strong>Hello {visitor_name},</strong><br><br>
+            You have been pre-approved for your visit.<br>
+            Please use the QR code below for entry:<br><br>
+            <img src="{badge_url}" alt="Visitor Badge" style="width:200px;"><br><br>
+            This badge is valid only for your scheduled time window.
+        """
+    )
+
+    try:
+        sg = SendGridAPIClient(SENDGRID_API_KEY)
+        response = sg.send(message)
+        logger.info(f"Email sent to {to_email} - status: {response.status_code}")
+        return response.status_code
+    except Exception as e:
+        logger.error(f"Error sending badge email: {e}")
+        return None

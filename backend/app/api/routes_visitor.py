@@ -7,7 +7,7 @@ from app.schemas.visitor import VisitorCreate, VisitorOut
 from app.schemas.approval import ApprovalOut
 from app.services.visitor_service import VisitorService
 from app.core.config import SessionLocal
-from app.utils.email import send_visitor_notification
+from app.utils.email import send_visitor_notification, send_badge_email
 from app.utils.qr_generator import generate_qr_and_upload
 from app.logger_config import setup_logger
 
@@ -91,6 +91,8 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
                         badge_url = generate_qr_and_upload(str(visitor_id), filename=f"visitor_{visitor_id}")
                         visitor.badge_url = badge_url
                         logger.info(f"Generated QR badge for visitor {visitor_id}")
+
+                        send_badge_email(visitor.contact, visitor.full_name, badge_url)
 
                     db.commit()
                     db.refresh(visitor)
