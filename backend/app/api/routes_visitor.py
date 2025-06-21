@@ -1,3 +1,7 @@
+"""
+Visitor Route Module — Manages registration, badge issuance, pre-approvals, and check-out flows.
+"""
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -21,9 +25,12 @@ def get_db():
     finally:
         db.close()
 
-
 @router.get("/{visitor_id}", response_model=VisitorOut)
 def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
+    """
+    Fetch visitor details.
+    If no approval exists or it is PENDING but falls within pre-approval window, auto-approve.
+    """
     logger.info(f"Fetching visitor: {visitor_id}")
     service = VisitorService(db)
     visitor = service.fetch_visitor(visitor_id)
@@ -39,7 +46,8 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
 
     if existing_approval:
         logger.info(f"Existing approval status: {existing_approval.status}")
-    
+
+    # Check for auto-approval via pre-approval
     if not existing_approval or existing_approval.status == ApprovalStatus.PENDING:
         now = datetime.utcnow()
         logger.info(f"Checking pre-approvals for visitor {visitor_id} at {now}")
@@ -71,7 +79,7 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
                     logger.info("Pre-approval window and visit count valid. Proceeding to auto-approve...")
 
                     # ✅ Update existing PENDING approval if exists
-                    if existing_approval:
+                    if existing_approval and existing_approval.status == ApprovalStatus.PENDING:
                         existing_approval.status = ApprovalStatus.APPROVED
                         existing_approval.decision_at = datetime.utcnow()
                         logger.info("Updated existing PENDING approval to APPROVED")
@@ -92,6 +100,7 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
                         visitor.badge_url = badge_url
                         logger.info(f"Generated QR badge for visitor {visitor_id}")
 
+                        # Optional: Email to visitor
                         send_badge_email(visitor.contact, visitor.full_name, badge_url)
 
                     db.commit()
@@ -101,7 +110,7 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
                     db.rollback()
                     logger.error(f"❌ Auto-approval or badge generation failed: {e}", exc_info=True)
 
-    # 🧠 Fetch final approval for response
+    # 🧠 Fetch latest APPROVED approval to attach to response
     latest_approval = (
         db.query(Approval)
         .filter_by(visitor_id=visitor_id, status=ApprovalStatus.APPROVED)
@@ -115,9 +124,11 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
 
     return visitor_data
 
-
 @router.post("/register", response_model=VisitorOut, status_code=status.HTTP_201_CREATED)
 def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
+    """
+    Register a new visitor. Send approval request email to host employee.
+    """
     host = (
         db.query(Employee)
         .filter(
@@ -135,6 +146,7 @@ def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
     service = VisitorService(db)
     visitor = service.register_visitor(data.dict())
 
+    # Notify host by email
     if host.email:
         send_visitor_notification(
             to_email=host.email,
@@ -144,9 +156,11 @@ def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
 
     return visitor
 
-
 @router.patch("/{visitor_id}/checkout", response_model=VisitorOut)
 def checkout_visitor(visitor_id: int, db: Session = Depends(get_db)):
+    """
+    Mark a visitor as checked out.
+    """
     service = VisitorService(db)
     visitor = service.fetch_visitor(visitor_id)
 
