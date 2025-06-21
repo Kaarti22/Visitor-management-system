@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.schemas.visitor import VisitorCreate, VisitorOut
 from app.services.visitor_service import VisitorService
 from app.core.config import SessionLocal
+from app.utils.email import send_visitor_notification
 from app.models import Employee
 from datetime import datetime
 
@@ -41,6 +42,14 @@ def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
 
     service = VisitorService(db)
     visitor = service.register_visitor(data.dict())
+
+    if host.email:
+        send_visitor_notification(
+            to_email=host.email,
+            visitor_name=data.full_name,
+            purpose=data.purpose
+        )
+
     return visitor
 
 @router.patch("/{visitor_id}/checkout", response_model=VisitorOut)
