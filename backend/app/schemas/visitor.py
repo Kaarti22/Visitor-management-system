@@ -24,6 +24,10 @@ class VisitorOut(BaseModel):
     check_in: datetime
     check_out: Optional[datetime]
     created_at: datetime
+    approval: Optional["ApprovalOut"] = None
 
     class Config:
-        orm_mode = True
+        from_attributes = True
+
+from app.schemas.approval import ApprovalOut
+VisitorOut.update_forward_refs()

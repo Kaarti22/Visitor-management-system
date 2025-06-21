@@ -24,7 +24,12 @@ const PreApprovePage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validFrom || !validTo) {
-      toast.error("Please select valid date & time");
+      toast.error("Please select both valid from and to date & time");
+      return;
+    }
+
+    if (validTo <= validFrom) {
+      toast.error("End time must be after start time");
       return;
     }
 
@@ -33,11 +38,15 @@ const PreApprovePage = () => {
       await api.post("/preapprovals/", {
         visitor_id: Number(visitorId),
         employee_id: employee?.id,
-        valid_from: validFrom.toISOString(),
-        valid_to: validTo.toISOString(),
+        valid_from: validFrom.toISOString().replace("Z", ""),
+        valid_to: validTo.toISOString().replace("Z", ""),
         max_visits_per_day: maxPerDay,
       });
-      toast.success("Pre-approval scheduled successfully");
+
+      toast.success(`Pre-approval scheduled successfully`, {
+        description: `From ${validFrom.toLocaleString("en-IN")} to ${validTo.toLocaleString("en-IN")}`,
+      });
+
       setVisitorId("");
       setValidFrom(undefined);
       setValidTo(undefined);
@@ -62,7 +71,13 @@ const PreApprovePage = () => {
           Pre-Approve a Visitor
         </h1>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          onKeyDown={(ev) => {
+            if (ev.key == "Enter") ev.preventDefault();
+          }}
+          className="space-y-6"
+        >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="visitorId">Visitor ID</Label>
@@ -100,7 +115,11 @@ const PreApprovePage = () => {
           </div>
 
           <div className="pt-4">
-            <Button type="submit" className="w-full cursor-pointer" disabled={loading}>
+            <Button
+              type="submit"
+              className="w-full cursor-pointer"
+              disabled={loading}
+            >
               {loading ? "Scheduling..." : "Schedule Pre-Approval"}
             </Button>
           </div>

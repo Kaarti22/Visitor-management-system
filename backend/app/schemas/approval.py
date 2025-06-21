@@ -19,7 +19,7 @@ class ApprovalOut(BaseModel):
     visitor: Optional[VisitorOut]
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class ApprovalAction(BaseModel):
     status: ApprovalStatus

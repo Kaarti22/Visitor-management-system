@@ -45,11 +45,11 @@ const BadgePage = () => {
     fetchVisitor();
   }, [visitorId]);
 
-  console.log(visitor);
-
   if (!visitorId)
     return <p className="p-4">Visitor ID is missing in the URL.</p>;
   if (!visitor) return <p className="p-4">Loading visitor badge...</p>;
+
+  const isApproved = visitor.approval?.status === "APPROVED";
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-white dark:from-gray-900 dark:to-gray-800 flex items-center justify-center px-4">
@@ -63,7 +63,7 @@ const BadgePage = () => {
           Visitor Badge
         </h1>
 
-        {visitor.badge_url ? (
+        {isApproved && visitor.badge_url ? (
           <img
             src={visitor.badge_url}
             alt="QR Badge"
@@ -93,6 +93,7 @@ const BadgePage = () => {
               Checked out at: {new Date(visitor.check_out).toLocaleString()}
             </p>
           ) : (
+            isApproved &&
             visitor.badge_url && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}

@@ -31,14 +31,15 @@ export const DateTimePicker = ({
       .padStart(2, "0")}`;
   });
 
-  const handleConfirm = () => {
+  // ✅ Automatically combine date + time and send via onChange
+  React.useEffect(() => {
     if (selectedDate && selectedTime) {
       const [hour, minute] = selectedTime.split(":").map(Number);
-      const localDate = new Date(selectedDate!);
+      const localDate = new Date(selectedDate);
       localDate.setHours(hour, minute, 0, 0);
       onChange(new Date(localDate));
     }
-  };
+  }, [selectedDate, selectedTime]);
 
   return (
     <Card className="bg-white dark:bg-gray-800 shadow border">
@@ -55,6 +56,22 @@ export const DateTimePicker = ({
             defaultMonth={selectedDate}
             showOutsideDays={false}
           />
+
+          {/* ✅ Show selected value */}
+          {selectedDate && selectedTime && (
+            <p className="text-xs text-gray-500 mt-2">
+              Selected:{" "}
+              {format(
+                new Date(
+                  selectedDate.setHours(
+                    Number(selectedTime.split(":")[0]),
+                    Number(selectedTime.split(":")[1])
+                  )
+                ),
+                "PPpp"
+              )}
+            </p>
+          )}
         </div>
 
         {/* Time Picker */}
@@ -71,17 +88,6 @@ export const DateTimePicker = ({
           ))}
         </div>
       </CardContent>
-
-      <CardFooter className="flex justify-end border-t px-4 py-3">
-        <Button
-          variant="outline"
-          className="cursor-pointer"
-          disabled={!selectedDate || !selectedTime}
-          onClick={handleConfirm}
-        >
-          Confirm
-        </Button>
-      </CardFooter>
     </Card>
   );
 };
