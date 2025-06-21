@@ -8,8 +8,11 @@ import axios from "axios";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 const RegisterPage = () => {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     full_name: "",
     contact: "",
@@ -44,11 +47,14 @@ const RegisterPage = () => {
     ev.preventDefault();
     setLoading(true);
     try {
-      await axios.post(
+      const res = await axios.post(
         `${process.env.NEXT_PUBLIC_API_BASE_URL}/visitors/register`,
         formData
       );
-      toast.success("Visitor registered successfully.");
+
+      const visitorId = res.data.id;
+      toast.success(`Visitor registered successfully! Your ID is ${visitorId}, reedirecting to badge...`);
+      router.push(`/visitor/badge?id=${visitorId}`);
     } catch (err: any) {
       toast.error(err.response?.data?.detail || "Something went wrong");
     } finally {
@@ -80,9 +86,7 @@ const RegisterPage = () => {
         transition={{ duration: 0.6 }}
       >
         <div className="max-w-md mx-auto space-y-6">
-          <h1 className="text-3xl font-bold text-center">
-            Visitor Registration
-          </h1>
+          <h1 className="text-3xl font-bold text-center">Visitor Registration</h1>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
             {[
