@@ -1,19 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
+from datetime import datetime
+from app.models import Employee, PreApproval, Approval, ApprovalStatus
 from app.schemas.visitor import VisitorCreate, VisitorOut
 from app.schemas.approval import ApprovalOut
 from app.services.visitor_service import VisitorService
 from app.core.config import SessionLocal
 from app.utils.email import send_visitor_notification
 from app.utils.qr_generator import generate_qr_and_upload
-from app.schemas.approval import ApprovalStatus
-from app.models import Employee, PreApproval, Approval
-from datetime import datetime
 from app.logger_config import setup_logger
 
 logger = setup_logger()
-
 router = APIRouter(prefix="/visitors", tags=["Visitors"])
 
 def get_db():
@@ -23,6 +21,7 @@ def get_db():
     finally:
         db.close()
 
+
 @router.get("/{visitor_id}", response_model=VisitorOut)
 def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
     logger.info(f"Fetching visitor: {visitor_id}")
@@ -31,7 +30,6 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
     if not visitor:
         raise HTTPException(status_code=404, detail="Visitor not found")
 
-    # Check if already approved
     existing_approval = (
         db.query(Approval)
         .filter_by(visitor_id=visitor_id)
@@ -40,11 +38,11 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
     )
 
     if existing_approval:
-        logger.info(f"Approval status: {existing_approval.status}, Decision at: {existing_approval.decision_at}")
-
+        logger.info(f"Existing approval status: {existing_approval.status}")
+    
     if not existing_approval or existing_approval.status == ApprovalStatus.PENDING:
         now = datetime.utcnow()
-        logger.info(f"No approved record found. Checking pre-approval for {visitor_id} at {now.isoformat()}")
+        logger.info(f"Checking pre-approvals for visitor {visitor_id} at {now}")
 
         pre = (
             db.query(PreApproval)
@@ -68,37 +66,43 @@ def get_visitor(visitor_id: int, db: Session = Depends(get_db)):
                 .count()
             )
 
-            logger.info(f"Valid pre-approval found. max_per_day={pre.max_visits_per_day}, visits_today={visits_today}")
-
             if visits_today < pre.max_visits_per_day:
                 try:
-                    auto_approval = Approval(
-                        visitor_id=visitor_id,
-                        employee_id=pre.employee_id,
-                        status=ApprovalStatus.APPROVED,
-                        decision_at=datetime.utcnow(),
-                        requested_at=datetime.utcnow()
-                    )
-                    db.add(auto_approval)
+                    logger.info("Pre-approval window and visit count valid. Proceeding to auto-approve...")
 
+                    # ✅ Update existing PENDING approval if exists
+                    if existing_approval:
+                        existing_approval.status = ApprovalStatus.APPROVED
+                        existing_approval.decision_at = datetime.utcnow()
+                        logger.info("Updated existing PENDING approval to APPROVED")
+                    else:
+                        auto_approval = Approval(
+                            visitor_id=visitor_id,
+                            employee_id=pre.employee_id,
+                            status=ApprovalStatus.APPROVED,
+                            decision_at=datetime.utcnow(),
+                            requested_at=datetime.utcnow()
+                        )
+                        db.add(auto_approval)
+                        logger.info("Inserted new auto-approval record")
+
+                    # ✅ Generate QR badge if not already present
                     if not visitor.badge_url:
-                        badge_url = generate_qr_and_upload(str(visitor.id))
+                        badge_url = generate_qr_and_upload(str(visitor_id), filename=f"visitor_{visitor_id}")
                         visitor.badge_url = badge_url
-                        visitor.check_in = datetime.utcnow()
+                        logger.info(f"Generated QR badge for visitor {visitor_id}")
 
                     db.commit()
-                    db.refresh(auto_approval)
                     db.refresh(visitor)
-                    logger.info(f"Auto-approved and generated badge for visitor {visitor_id}")
 
                 except Exception as e:
                     db.rollback()
-                    logger.error(f"❌ Failed to auto-approve visitor {visitor_id}: {e}", exc_info=True)
+                    logger.error(f"❌ Auto-approval or badge generation failed: {e}", exc_info=True)
 
-    # Always return the latest approval (after any potential update)
+    # 🧠 Fetch final approval for response
     latest_approval = (
         db.query(Approval)
-        .filter(Approval.visitor_id == visitor_id, Approval.status == ApprovalStatus.APPROVED)
+        .filter_by(visitor_id=visitor_id, status=ApprovalStatus.APPROVED)
         .order_by(Approval.decision_at.desc().nullslast())
         .first()
     )
@@ -138,6 +142,7 @@ def register_visitor(data: VisitorCreate, db: Session = Depends(get_db)):
 
     return visitor
 
+
 @router.patch("/{visitor_id}/checkout", response_model=VisitorOut)
 def checkout_visitor(visitor_id: int, db: Session = Depends(get_db)):
     service = VisitorService(db)
@@ -145,10 +150,10 @@ def checkout_visitor(visitor_id: int, db: Session = Depends(get_db)):
 
     if not visitor:
         raise HTTPException(status_code=404, detail="Visitor not found")
-    
+
     if visitor.check_out:
-        raise HTTPException(status_code=400, detail="Visitor already checkout out")
-    
+        raise HTTPException(status_code=400, detail="Visitor already checked out")
+
     visitor.check_out = datetime.utcnow()
     db.commit()
     db.refresh(visitor)
